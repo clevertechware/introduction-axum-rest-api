@@ -1,0 +1,9 @@
+[package]
+name = "rust-axum-rest-api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dotenvy = "0.15.7"
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "tls-native-tls", "postgres"] }
+tokio = { version = "1.47.1", features = ["full"] }
