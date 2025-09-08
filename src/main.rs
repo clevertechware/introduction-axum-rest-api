@@ -13,7 +13,7 @@ async fn main() -> Result<(), sqlx::Error> {
 
     dotenv().ok();
     let url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgPoolOptions::new()
+    let pool = PgPoolOptions::new()
         .connect(&url)
         .await
         .expect("Failed to connect to database");
@@ -22,7 +22,9 @@ async fn main() -> Result<(), sqlx::Error> {
     // build our application with a route
     let app = Router::new()
         // Get '/' goes to root
-        .route("/", get(root));
+        .route("/", get(root))
+        // Extension layer
+        .layer(axum::Extension(pool));
 
     // run our app with hyper, listening globally on port 5000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8888").await.unwrap();
