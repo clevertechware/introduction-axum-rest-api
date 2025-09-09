@@ -1,0 +1,32 @@
+services:
+  postgresql:
+    image: postgres:17.6
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: rust-axum-rest-api
+    ports:
+      - "5440:5432"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    environment:
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 7080
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_LOG_LEVEL: info
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:7080/health/ready" ]
+      interval: 15s
+      timeout: 2s
+      retries: 15
+    command: [ "start-dev" ]
+    # command: ["start-dev", "--import-realm"]
+    ports:
+      - "7080:8080"
+      - "7443:8443"
+#    volumes: # Ignore if you don't have realm-export.json to migrate data
+#      - ../keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
