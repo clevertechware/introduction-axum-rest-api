@@ -1495,6 +1495,7 @@ dependencies = [
 name = "rust-axum-rest-api"
 version = "0.1.0"
 dependencies = [
+ "async-oidc-jwt-validator",
  "axum",
  "axum-jwt-oidc",
  "dotenvy",

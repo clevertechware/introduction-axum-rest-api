@@ -1,3 +1,4 @@
+use async_oidc_jwt_validator::Algorithm;
 use axum::extract::Path;
 use axum::http::StatusCode;
 use axum::routing::{get, post};
@@ -26,15 +27,16 @@ async fn main() -> Result<(), sqlx::Error> {
     info!("Connected to the database!");
 
     // Initialize OIDC validator
-    let config = OidcConfig::new(
-        "http://your-oidc-provider.com".to_string(),
-        "your-client-id".to_string(),
-        "https://your-oidc-provider.com/.well-known/jwks.json".to_string(),
-    );
+    let config = OidcConfig::new_with_discovery(
+        std::env::var("ISSUER_URL").expect("ISSUER_URL must be set"),
+        "".to_string(),
+    )
+    .await
+    .unwrap();
     let oidc_validator = OidcValidator::new(config);
-
     // Configure validation rules
-    let validation = Validation::default();
+    let mut validation = Validation::new(Algorithm::RS256);
+    validation.validate_aud = false;
     // Create the authentication layer
     let auth_layer = OidcAuthLayer::<CustomClaims>::new(oidc_validator, validation);
 
@@ -49,7 +51,8 @@ async fn main() -> Result<(), sqlx::Error> {
             get(get_post).put(update_post).delete(delete_post),
         )
         // Extension layer
-        .layer(Extension(pool));
+        .layer(Extension(pool))
+        .layer(auth_layer);
 
     // run our app with hyper, listening globally on port 5000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8888").await.unwrap();
@@ -73,15 +76,19 @@ struct Post {
 }
 
 async fn get_posts(
-    Extension(claims): Extension<CustomClaims>,
+    claims: Option<Extension<CustomClaims>>,
     Extension(pool): Extension<Pool<Postgres>>,
 ) -> Result<Json<Vec<Post>>, StatusCode> {
-    let posts = sqlx::query_as!(Post, "SELECT id, author_id, title, body FROM posts")
-        .fetch_all(&pool)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    debug!("Posts fetched by {}", claims.sub);
-    Ok(Json(posts))
+    if let Some(Extension(claims)) = claims {
+        let posts = sqlx::query_as!(Post, "SELECT id, author_id, title, body FROM posts")
+            .fetch_all(&pool)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        debug!("Posts fetched by {}", claims.sub);
+        Ok(Json(posts))
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
 }
 
 async fn get_post(
