@@ -28,5 +28,5 @@ services:
     ports:
       - "7080:8080"
       - "7443:8443"
-#    volumes: # Ignore if you don't have realm-export.json to migrate data
-#      - ../keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+#    volumes: # Ignore if you don't have realm.json to migrate data
+#      - ../keycloak/realm.json:/opt/keycloak/data/import/realm.json

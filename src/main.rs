@@ -92,19 +92,24 @@ async fn get_posts(
 }
 
 async fn get_post(
+    claims: Option<Extension<CustomClaims>>,
     Extension(pool): Extension<Pool<Postgres>>,
     Path(id): Path<i32>,
 ) -> Result<Json<Post>, StatusCode> {
-    let post = sqlx::query_as!(
-        Post,
-        "SELECT id, author_id, title, body FROM posts WHERE id = $1",
-        id
-    )
-    .fetch_one(&pool)
-    .await
-    .map_err(|_| StatusCode::NOT_FOUND)?;
+    if let Some(Extension(_)) = claims {
+        let post = sqlx::query_as!(
+            Post,
+            "SELECT id, author_id, title, body FROM posts WHERE id = $1",
+            id
+        )
+        .fetch_one(&pool)
+        .await
+        .map_err(|_| StatusCode::NOT_FOUND)?;
 
-    Ok(Json(post))
+        Ok(Json(post))
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -115,24 +120,28 @@ struct CreatePost {
 }
 
 async fn create_post(
-    Extension(claims): Extension<CustomClaims>,
+    claims: Option<Extension<CustomClaims>>,
     Extension(pool): Extension<Pool<Postgres>>,
     Json(new_post): Json<CreatePost>,
 ) -> Result<Json<Post>, StatusCode> {
-    let post = sqlx::query_as!(
-        Post,
-        "INSERT INTO posts (author_id, title, body) VALUES ($1, $2, $3) RETURNING id, title, body, author_id",
-        new_post.author_id,
-        new_post.title,
-        new_post.body
-    )
-        .fetch_one(&pool)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if let Some(Extension(claims)) = claims {
+        let post = sqlx::query_as!(
+            Post,
+            "INSERT INTO posts (author_id, title, body) VALUES ($1, $2, $3) RETURNING id, title, body, author_id",
+            new_post.author_id,
+            new_post.title,
+            new_post.body
+        )
+            .fetch_one(&pool)
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    debug!("Post created by {}", claims.sub);
+        debug!("Post created by {}", claims.sub);
 
-    Ok(Json(post))
+        Ok(Json(post))
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -143,40 +152,50 @@ struct UpdatePost {
 }
 
 async fn update_post(
+    claims: Option<Extension<CustomClaims>>,
     Extension(pool): Extension<Pool<Postgres>>,
     Path(id): Path<i32>,
     Json(updated_post): Json<UpdatePost>,
 ) -> Result<Json<Post>, StatusCode> {
-    let post = sqlx::query_as!(
-        Post,
-        "UPDATE posts SET title = $1, body = $2, author_id = $3 WHERE id = $4 RETURNING id, author_id, title, body",
-        updated_post.title,
-        updated_post.body,
-        updated_post.author_id,
-        id
-    )
-        .fetch_one(&pool)
-        .await;
+    if let Some(Extension(_)) = claims {
+        let post = sqlx::query_as!(
+            Post,
+            "UPDATE posts SET title = $1, body = $2, author_id = $3 WHERE id = $4 RETURNING id, author_id, title, body",
+            updated_post.title,
+            updated_post.body,
+            updated_post.author_id,
+            id
+        )
+            .fetch_one(&pool)
+            .await;
 
-    match post {
-        Ok(post) => Ok(Json(post)),
-        Err(_) => Err(StatusCode::NOT_FOUND),
+        match post {
+            Ok(post) => Ok(Json(post)),
+            Err(_) => Err(StatusCode::NOT_FOUND),
+        }
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
     }
 }
 
 async fn delete_post(
+    claims: Option<Extension<CustomClaims>>,
     Extension(pool): Extension<Pool<Postgres>>,
     Path(id): Path<i32>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    let result = sqlx::query!("DELETE FROM posts WHERE id = $1", id)
-        .execute(&pool)
-        .await;
+    if let Some(Extension(_)) = claims {
+        let result = sqlx::query!("DELETE FROM posts WHERE id = $1", id)
+            .execute(&pool)
+            .await;
 
-    match result {
-        Ok(_) => Ok(Json(serde_json::json!({
-            "message": "Post deleted successfully"
-        }))),
-        Err(_) => Err(StatusCode::NOT_FOUND),
+        match result {
+            Ok(_) => Ok(Json(
+                serde_json::json!({"message": "Post deleted successfully"}),
+            )),
+            Err(_) => Err(StatusCode::NOT_FOUND),
+        }
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
     }
 }
 
@@ -198,20 +217,24 @@ struct Author {
 }
 
 async fn create_author(
-    Extension(claims): Extension<CustomClaims>,
+    claims: Option<Extension<CustomClaims>>,
     Extension(pool): Extension<Pool<Postgres>>,
     Json(new_author): Json<CreateAuthor>,
 ) -> Result<Json<Author>, StatusCode> {
-    let author = sqlx::query_as!(
-        Author,
-        "INSERT INTO authors (name) VALUES ($1) RETURNING id, name",
-        new_author.name,
-    )
-    .fetch_one(&pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    info!("Author created: {} by {}", new_author, claims.sub);
-    Ok(Json(author))
+    if let Some(Extension(claims)) = claims {
+        let author = sqlx::query_as!(
+            Author,
+            "INSERT INTO authors (name) VALUES ($1) RETURNING id, name",
+            new_author.name,
+        )
+        .fetch_one(&pool)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        info!("Author created: {} by {}", new_author, claims.sub);
+        Ok(Json(author))
+    } else {
+        Err(StatusCode::UNAUTHORIZED)
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
