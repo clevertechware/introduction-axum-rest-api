@@ -19,14 +19,12 @@ services:
       KC_HEALTH_ENABLED: "true"
       KC_LOG_LEVEL: info
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:7080/health/ready" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
       interval: 15s
       timeout: 2s
       retries: 15
-    command: [ "start-dev" ]
-    # command: ["start-dev", "--import-realm"]
+    command: [ "start-dev", "--import-realm" ]
     ports:
-      - "7080:8080"
-      - "7443:8443"
-#    volumes: # Ignore if you don't have realm.json to migrate data
-#      - ../keycloak/realm.json:/opt/keycloak/data/import/realm.json
+      - "8080:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import

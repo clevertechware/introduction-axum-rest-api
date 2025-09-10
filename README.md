@@ -16,11 +16,38 @@ I just an OIDC JWT Token validation layer.
 ### Running
 
 ```shell
+cargo install sqlx-cli --no-default-features --features native-tls,postgres
 docker compose up -d
+sqlx migrate run
 cargo run
 ```
 
 Then in another terminal:
+
+```shell
+export ACCESS_TOKEN=$(\
+  http --form -A basic -a cli:WOhxh2rBPgVrbeH8cXjjNSX4kp1MLFkd \
+  :8080/realms/rest-axum-api/protocol/openid-connect/token \
+  grant_type=password \
+  username=bob \
+  password=password|jq -r .access_token)
+
+http -A bearer -a $ACCESS_TOKEN :8888/posts
+http -A bearer -a $ACCESS_TOKEN :8888/posts title='Aweomse post' body='This is a post'
+http -A bearer -a $ACCESS_TOKEN :8888/authors name='Bob' 
+http -A bearer -a $ACCESS_TOKEN :8888/posts title='Oh my god' body='This is an awsome post' author_id:=1
+http -A bearer -a $ACCESS_TOKEN :8888/posts
+http -A bearer -a $ACCESS_TOKEN PUT :8888/posts/1 title='Aweomse post' body='I forgot the author' author_id:=1
+http -A bearer -a $ACCESS_TOKEN :8888/posts
+http -A bearer -a $ACCESS_TOKEN DELETE :8888/posts/2
+http -A bearer -a $ACCESS_TOKEN :8888/posts
+```
+
+### Stopping
+
+```shell
+docker compose down --volumes
+```
 
 ### Resources
 

@@ -19,12 +19,17 @@ async fn main() -> Result<(), sqlx::Error> {
         .init();
 
     dotenv().ok();
-    let url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
     let pool = PgPoolOptions::new()
-        .connect(&url)
+        .connect(&database_url)
         .await
         .expect("Failed to connect to database");
     info!("Connected to the database!");
+
+    // Exécution des migrations
+    sqlx::migrate!("./migrations").run(&pool).await?;
+    info!("Migrations executed successfully");
 
     // Initialize OIDC validator
     let config = OidcConfig::new_with_discovery(
