@@ -18,18 +18,27 @@ I just an OIDC JWT Token validation layer.
 ```shell
 cargo install sqlx-cli --no-default-features --features native-tls,postgres
 docker compose up -d
-sqlx migrate run
-cargo run
 ```
 
-Then in another terminal:
+Then create an env file with the following content:
 
 ```shell
 cat << EOF > .env
 DATABASE_URL=postgres://postgres:password@localhost:5432/rust-axum-rest-api
 ISSUER_URL=http://localhost:8080/realms/rest-axum-api
 EOF
+```
 
+You can now run the application:
+```shell
+# Run the migrations first
+sqlx migrate run
+# Then run the application
+cargo run
+```
+
+Finally, you can test the application with the following commands:
+```shell
 export ACCESS_TOKEN=$(\
   http --form -A basic -a cli:WOhxh2rBPgVrbeH8cXjjNSX4kp1MLFkd \
   :8080/realms/rest-axum-api/protocol/openid-connect/token \

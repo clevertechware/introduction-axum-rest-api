@@ -12,7 +12,7 @@ use std::fmt::{Display, Formatter};
 use tracing::{debug, info};
 
 #[tokio::main]
-async fn main() -> Result<(), sqlx::Error> {
+async fn main() {
     // initialize tracing for logging
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::DEBUG)
@@ -28,7 +28,7 @@ async fn main() -> Result<(), sqlx::Error> {
     info!("Connected to the database!");
 
     // Exécution des migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    sqlx::migrate!("./migrations").run(&pool).await.expect("Failed to run migrations");
     info!("Migrations executed successfully");
 
     // Initialize OIDC validator
@@ -60,11 +60,9 @@ async fn main() -> Result<(), sqlx::Error> {
         .layer(auth_layer);
 
     // run our app with hyper, listening globally on port 8000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await?;
-    info!("Listening on {}", listener.local_addr()?);
-    axum::serve(listener, app).await?;
-
-    Ok(())
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.expect("Failed to bind on port 8000");
+    info!("Listening on {}", listener.local_addr().unwrap());
+    axum::serve(listener, app).await.unwrap();
 }
 
 // handler for root
