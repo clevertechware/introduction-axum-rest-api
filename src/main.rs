@@ -60,7 +60,7 @@ async fn main() {
         .layer(auth_layer);
 
     // run our app with hyper, listening globally on port 8000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.expect("Failed to bind on port 8000");
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:8000").await.expect("Failed to bind on port 8000");
     info!("Listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
