@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: rust-axum-rest-api
     ports:
-      - "5440:5432"
+      - "5432:5432"
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.3

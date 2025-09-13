@@ -59,10 +59,10 @@ async fn main() -> Result<(), sqlx::Error> {
         .layer(Extension(pool))
         .layer(auth_layer);
 
-    // run our app with hyper, listening globally on port 5000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:8888").await.unwrap();
-    info!("Listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+    // run our app with hyper, listening globally on port 8000
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await?;
+    info!("Listening on {}", listener.local_addr()?);
+    axum::serve(listener, app).await?;
 
     Ok(())
 }

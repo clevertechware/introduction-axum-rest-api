@@ -25,6 +25,11 @@ cargo run
 Then in another terminal:
 
 ```shell
+cat << EOF > .env
+DATABASE_URL=postgres://postgres:password@localhost:5432/rust-axum-rest-api
+ISSUER_URL=http://localhost:8080/realms/rest-axum-api
+EOF
+
 export ACCESS_TOKEN=$(\
   http --form -A basic -a cli:WOhxh2rBPgVrbeH8cXjjNSX4kp1MLFkd \
   :8080/realms/rest-axum-api/protocol/openid-connect/token \
@@ -32,15 +37,15 @@ export ACCESS_TOKEN=$(\
   username=bob \
   password=password|jq -r .access_token)
 
-http -A bearer -a $ACCESS_TOKEN :8888/posts
-http -A bearer -a $ACCESS_TOKEN :8888/posts title='Aweomse post' body='This is a post'
-http -A bearer -a $ACCESS_TOKEN :8888/authors name='Bob' 
-http -A bearer -a $ACCESS_TOKEN :8888/posts title='Oh my god' body='This is an awsome post' author_id:=1
-http -A bearer -a $ACCESS_TOKEN :8888/posts
-http -A bearer -a $ACCESS_TOKEN PUT :8888/posts/1 title='Aweomse post' body='I forgot the author' author_id:=1
-http -A bearer -a $ACCESS_TOKEN :8888/posts
-http -A bearer -a $ACCESS_TOKEN DELETE :8888/posts/2
-http -A bearer -a $ACCESS_TOKEN :8888/posts
+http -A bearer -a $ACCESS_TOKEN :8000/posts
+http -A bearer -a $ACCESS_TOKEN :8000/posts title='Aweomse post' body='This is a post'
+http -A bearer -a $ACCESS_TOKEN :8000/authors name='Bob' 
+http -A bearer -a $ACCESS_TOKEN :8000/posts title='Oh my god' body='This is an awsome post' author_id:=1
+http -A bearer -a $ACCESS_TOKEN :8000/posts
+http -A bearer -a $ACCESS_TOKEN PUT :8000/posts/1 title='Aweomse post' body='I forgot the author' author_id:=1
+http -A bearer -a $ACCESS_TOKEN :8000/posts
+http -A bearer -a $ACCESS_TOKEN DELETE :8000/posts/2
+http -A bearer -a $ACCESS_TOKEN :8000/posts
 ```
 
 ### Stopping
