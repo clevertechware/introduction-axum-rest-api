@@ -48,7 +48,6 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         // Get '/' goes to root
-        .route("/", get(root))
         .route("/authors", post(create_author))
         .route("/posts", get(get_posts).post(create_post))
         .route(
@@ -63,11 +62,6 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8000").await.expect("Failed to bind on port 8000");
     info!("Listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
-}
-
-// handler for root
-async fn root() -> &'static str {
-    "Hello, World!"
 }
 
 #[derive(Serialize, Deserialize)]
